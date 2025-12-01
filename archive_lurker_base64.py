@@ -2,12 +2,9 @@ import base64
 import sys
 import io
 
-
-
 #-----Mostra contenuto archivio senza estrarlo, dal Base64
 #---Come usarlo
-#python zip_lurker.py base64_del_file.txt
-
+# python archive_lurker_base64.py base64_del_file.txt
 
 # ZIP
 import zipfile
@@ -31,24 +28,35 @@ if len(sys.argv) != 2:
 file_b64 = sys.argv[1]
 
 # Leggi Base64
-with open(file_b64, "r", encoding="utf-8") as f:
-    b64_data = f.read().strip()
+try:
+    with open(file_b64, "r", encoding="utf-8") as f:
+        b64_data = f.read().strip()
+except Exception as e:
+    print(f"Errore nella lettura del file Base64: {e}")
+    sys.exit(1)
 
-archive_bytes = base64.b64decode(b64_data)
+# Decodifica in memoria
+try:
+    archive_bytes = base64.b64decode(b64_data)
+except Exception as e:
+    print(f"Errore nella decodifica Base64: {e}")
+    sys.exit(1)
+
 archive_stream = io.BytesIO(archive_bytes)
 
 def list_zip():
     try:
-        zf = zipfile.ZipFile(archive_stream)
-        print("Formato ZIP:")
-        for name in zf.namelist():
-            print(name)
+        with zipfile.ZipFile(archive_stream) as zf:
+            print("Formato ZIP:")
+            for name in zf.namelist():
+                print(name)
         return True
-    except:
+    except Exception:
         return False
 
 def list_7z():
     if not py7zr:
+        print("py7zr non installato, non posso leggere archivi 7z.")
         return False
     try:
         archive_stream.seek(0)
@@ -57,11 +65,12 @@ def list_7z():
             for name in z.getnames():
                 print(name)
         return True
-    except:
+    except Exception:
         return False
 
 def list_rar():
     if not rarfile:
+        print("rarfile non installato, non posso leggere archivi RAR.")
         return False
     try:
         archive_stream.seek(0)
@@ -70,15 +79,17 @@ def list_rar():
             for name in rf.namelist():
                 print(name)
         return True
-    except:
+    except Exception:
         return False
 
 # Prova i formati
 if list_zip():
     sys.exit(0)
+
 archive_stream.seek(0)
 if list_7z():
     sys.exit(0)
+
 archive_stream.seek(0)
 if list_rar():
     sys.exit(0)
